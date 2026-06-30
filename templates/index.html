@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Grabber - ระบบดึงรหัส OTP อัตโนมัติ</title>
+    <!-- Google Fonts - Inter & Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.4);
+            --success: #10b981;
+            --error: #ef4444;
+            --input-bg: rgba(31, 41, 55, 0.5);
+            --input-border: rgba(255, 255, 255, 0.1);
+            --input-focus: #818cf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Sarabun', sans-serif;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 580px;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-area {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+            border-radius: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 20px var(--primary-glow);
+        }
+
+        .logo-area svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(to right, #ffffff, #d1d5db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Tabs System */
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid var(--card-border);
+            margin-bottom: 28px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), #5046e6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            padding-right: 44px; /* for password toggle */
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+            background: rgba(31, 41, 55, 0.7);
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+
+        .toggle-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* Action Button */
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--primary));
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loader */
+        .loader-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed var(--card-border);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent-cyan);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Results Area */
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .otp-box-wrapper {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(99, 102, 241, 0.1));
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
+        }
+
+        .otp-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .otp-code {
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            margin: 10px 0;
+            user-select: all;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .copy-btn:hover {
+            background: white;
+            color: black;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .meta-info {
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        .meta-info span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .error-message {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 25px;
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .error-message svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-area">
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                </svg>
+            </div>
+            <h1>OTP GRABBER</h1>
+            <div class="subtitle">ระบบดึงรหัส OTP อัตโนมัติสำหรับ Facebook</div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('outlook')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                Microsoft Outlook
+            </button>
+            <button class="tab-btn" onclick="switchTab('custom')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-4H6V10h12v2z"/>
+                </svg>
+                Custom API (Token)
+            </button>
+        </div>
+
+        <!-- Form for Outlook -->
+        <div id="outlook-content" class="tab-content active">
+            <form id="outlook-form" onsubmit="handleOutlookSubmit(event)">
+                <div class="form-group">
+                    <label for="outlook-email">อีเมล Outlook / Hotmail</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="outlook-email" class="form-control" placeholder="example@outlook.com" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="outlook-client-id">Client ID</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="outlook-client-id" class="form-control" placeholder="9e5f94bc-..." required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="outlook-refresh-token">Refresh Token</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="outlook-refresh-token" class="form-control" placeholder="ใส่ Refresh Token ของคุณ" required>
+                        <button type="button" class="toggle-btn" onclick="togglePassword('outlook-refresh-token')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="outlook-filter-keyword">ตัวกรองข้อความ (คีย์เวิร์ดในหัวข้อ/ผู้ส่ง เช่น facebook, shopee)</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="outlook-filter-keyword" class="form-control" placeholder="ปล่อยว่างเพื่อค้นหาจากจดหมายทั้งหมด หรือพิมพ์คีย์เวิร์ด">
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="outlook-btn">
+                    <span>ดึงรหัส OTP จาก Outlook</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Form for Custom API -->
+        <div id="custom-content" class="tab-content">
+            <form id="custom-form" onsubmit="handleCustomSubmit(event)">
+                <div class="form-group">
+                    <label for="custom-api-url">API URL (Endpoint)</label>
+                    <div class="input-wrapper">
+                        <input type="url" id="custom-api-url" class="form-control" placeholder="https://otp24hr.com/mails" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="custom-token">Authorization Token / API Token</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="custom-token" class="form-control" placeholder="ใส่ Token ของเว็บ" required>
+                        <button type="button" class="toggle-btn" onclick="togglePassword('custom-token')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="custom-btn">
+                    <span>ดึงรหัส OTP จาก Custom API</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading Area -->
+        <div class="loader-container" id="loader">
+            <div class="spinner"></div>
+            <div class="loader-text" id="loader-text">กำลังเชื่อมต่อกับเซิร์ฟเวอร์...</div>
+            <button type="button" id="cancel-poll-btn" class="copy-btn" style="margin-top: 12px; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); display: none;" onclick="cancelPolling()">
+                ยกเลิกการรอ OTP
+            </button>
+        </div>
+
+        <!-- Error Area -->
+        <div class="error-message" id="error-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span id="error-text">เกิดข้อผิดพลาดในการโหลดข้อมูล</span>
+        </div>
+
+        <!-- Result Area -->
+        <div class="result-container" id="result-box">
+            <div class="otp-box-wrapper">
+                <div class="otp-label">รหัสยืนยันตัวตน (OTP)</div>
+                <div class="otp-code" id="otp-display">000000</div>
+                <button type="button" class="copy-btn" onclick="copyOTP()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="copy-icon"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span id="copy-text">คัดลอกรหัส</span>
+                </button>
+
+                <div class="meta-info" id="meta-box" style="display:none;">
+                    <span id="meta-sender">ผู้ส่ง: -</span>
+                    <span id="meta-subject">หัวข้อ: -</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Tab switching logic
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        event.currentTarget.classList.add('active');
+        document.getElementById(`${tabName}-content`).classList.add('active');
+        
+        // Hide previous results
+        document.getElementById('result-box').style.display = 'none';
+        document.getElementById('error-box').style.display = 'none';
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    // Password Visibility Toggle
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const btn = input.nextElementSibling;
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+        } else {
+            input.type = 'password';
+            btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        }
+    }
+
+    // LocalStorage loading
+    window.addEventListener('load', () => {
+        if (localStorage.getItem('outlook_email')) {
+            document.getElementById('outlook-email').value = localStorage.getItem('outlook_email');
+        }
+        if (localStorage.getItem('outlook_client_id')) {
+            document.getElementById('outlook-client-id').value = localStorage.getItem('outlook_client_id');
+        }
+        if (localStorage.getItem('outlook_refresh_token')) {
+            document.getElementById('outlook-refresh-token').value = localStorage.getItem('outlook_refresh_token');
+        }
+        if (localStorage.getItem('outlook_filter_keyword')) {
+            document.getElementById('outlook-filter-keyword').value = localStorage.getItem('outlook_filter_keyword');
+        }
+        if (localStorage.getItem('custom_api_url')) {
+            document.getElementById('custom-api-url').value = localStorage.getItem('custom_api_url');
+        }
+        if (localStorage.getItem('custom_token')) {
+            document.getElementById('custom-token').value = localStorage.getItem('custom_token');
+        }
+    });
+
+    // Save to LocalStorage
+    function saveCredentials(type) {
+        if (type === 'outlook') {
+            localStorage.setItem('outlook_email', document.getElementById('outlook-email').value);
+            localStorage.setItem('outlook_client_id', document.getElementById('outlook-client-id').value);
+            localStorage.setItem('outlook_refresh_token', document.getElementById('outlook-refresh-token').value);
+            localStorage.setItem('outlook_filter_keyword', document.getElementById('outlook-filter-keyword').value);
+        } else if (type === 'custom') {
+            localStorage.setItem('custom_api_url', document.getElementById('custom-api-url').value);
+            localStorage.setItem('custom_token', document.getElementById('custom-token').value);
+        }
+    }
+
+    // Show loading
+    function showLoading(text) {
+        document.getElementById('loader').style.display = 'flex';
+        document.getElementById('loader-text').innerText = text;
+        document.getElementById('result-box').style.display = 'none';
+        document.getElementById('error-box').style.display = 'none';
+        
+        document.getElementById('outlook-btn').disabled = true;
+        document.getElementById('custom-btn').disabled = true;
+    }
+
+    // Hide loading
+    function hideLoading() {
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('cancel-poll-btn').style.display = 'none';
+        document.getElementById('outlook-btn').disabled = false;
+        document.getElementById('custom-btn').disabled = false;
+    }
+
+    // Show Error
+    function showError(message) {
+        document.getElementById('error-box').style.display = 'flex';
+        document.getElementById('error-text').innerText = message;
+    }
+
+    // Copy to Clipboard
+    function copyOTP() {
+        const otpText = document.getElementById('otp-display').innerText;
+        navigator.clipboard.writeText(otpText).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            const btnText = document.getElementById('copy-text');
+            const btnIcon = document.getElementById('copy-icon');
+            
+            btnText.innerText = 'คัดลอกเรียบร้อย!';
+            btn.style.background = 'var(--success)';
+            btn.style.borderColor = 'var(--success)';
+            
+            setTimeout(() => {
+                btnText.innerText = 'คัดลอกรหัส';
+                btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                btn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            }, 2000);
+        });
+    }
+
+    let pollIntervalId = null;
+    let currentAttempt = 0;
+    const maxAttempts = 12; // 12 * 5s = 60s
+
+    function cancelPolling() {
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+            pollIntervalId = null;
+        }
+        hideLoading();
+        showError('ยกเลิกการดึงข้อมูลแล้ว');
+    }
+
+    function startPolling(type, payload) {
+        currentAttempt = 1;
+        const endpoint = type === 'outlook' ? '/api/fetch-otp/outlook' : '/api/fetch-otp/custom';
+        const displayName = type === 'outlook' ? 'Outlook' : 'Custom API';
+        
+        document.getElementById('cancel-poll-btn').style.display = 'inline-flex';
+        showLoading(`กำลังดึงข้อมูล... ครั้งที่ ${currentAttempt}/${maxAttempts} (รอ OTP เข้า...)`);
+
+        const executeAttempt = () => {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                if (!pollIntervalId) return; // If cancelled in between, ignore
+
+                if (status === 200 && body.success) {
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                    hideLoading();
+                    
+                    document.getElementById('result-box').style.display = 'block';
+                    document.getElementById('otp-display').innerText = body.otp;
+                    
+                    if (type === 'outlook') {
+                        const metaBox = document.getElementById('meta-box');
+                        metaBox.style.display = 'flex';
+                        document.getElementById('meta-sender').innerText = `ผู้ส่ง: ${body.sender}`;
+                        document.getElementById('meta-subject').innerText = `หัวข้อ: ${body.subject}`;
+                        
+                        // Update rotated refresh token if provided
+                        if (body.new_refresh_token && body.new_refresh_token !== payload.refresh_token) {
+                            document.getElementById('outlook-refresh-token').value = body.new_refresh_token;
+                            localStorage.setItem('outlook_refresh_token', body.new_refresh_token);
+                        }
+                    } else {
+                        document.getElementById('meta-box').style.display = 'none';
+                    }
+                } else {
+                    currentAttempt++;
+                    if (currentAttempt > maxAttempts) {
+                        clearInterval(pollIntervalId);
+                        pollIntervalId = null;
+                        hideLoading();
+                        showError(body.error || 'ไม่พบรหัส OTP ในระบบหลังจากพยายามดึงข้อมูลเป็นเวลา 1 นาที');
+                    } else {
+                        document.getElementById('loader-text').innerText = `กำลังดึงข้อมูล... ครั้งที่ ${currentAttempt}/${maxAttempts} (รอ OTP เข้า...)`;
+                    }
+                }
+            })
+            .catch(err => {
+                if (!pollIntervalId) return;
+                currentAttempt++;
+                if (currentAttempt > maxAttempts) {
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                    hideLoading();
+                    showError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                } else {
+                    document.getElementById('loader-text').innerText = `กำลังดึงข้อมูล... ครั้งที่ ${currentAttempt}/${maxAttempts} (รอ OTP เข้า...)`;
+                }
+                console.error(err);
+            });
+        };
+
+        // Execute immediately on start
+        executeAttempt();
+
+        // Start 5-second interval
+        pollIntervalId = setInterval(executeAttempt, 5000);
+    }
+
+    // Submit Outlook
+    function handleOutlookSubmit(event) {
+        event.preventDefault();
+        saveCredentials('outlook');
+        
+        const email = document.getElementById('outlook-email').value;
+        const clientId = document.getElementById('outlook-client-id').value;
+        const refreshToken = document.getElementById('outlook-refresh-token').value;
+        const filterKeyword = document.getElementById('outlook-filter-keyword').value;
+
+        startPolling('outlook', {
+            email: email,
+            client_id: clientId,
+            refresh_token: refreshToken,
+            filter_keyword: filterKeyword
+        });
+    }
+
+    // Submit Custom API
+    function handleCustomSubmit(event) {
+        event.preventDefault();
+        saveCredentials('custom');
+
+        const apiUrl = document.getElementById('custom-api-url').value;
+        const token = document.getElementById('custom-token').value;
+
+        startPolling('custom', {
+            api_url: apiUrl,
+            token: token
+        });
+    }
+</script>
+
+</body>
+</html>
